@@ -1,6 +1,11 @@
 *~
+__pycache__
+
+__NOGIT__
 
 *-build/
 scenegraph/shaders/*.qsb
 
 scenegraph/doc/
+
+openmaptiles/maptiler-osm-2017-07-03-v3.6.1-france_rhone-alpes.mbtiles
