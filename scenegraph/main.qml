@@ -50,24 +50,25 @@
 
 import QtQuick 2.0
 
-import Graph 1.0
+import Scene 1.0
 
 Item {
     width: 800
     height: 400
 
-    Graph {
-        id: graph
+    Scene {
+        id: scene
         anchors.fill: parent
-        anchors.margins: 100
+        anchors.margins: 20
 
-        function newSample(i) {
-            return (Math.sin(i / 100.0 * Math.PI * 2) + 1) * 0.4 + Math.random() * 0.05;
+        function new_sample(i) {
+            // return (Math.sin(i / 100.0 * Math.PI * 2) + 1) * 0.4 + Math.random() * 0.05;
+            return (Math.sin(i / 100.0 * Math.PI * 2) + 1) * 0.4;
         }
 
         Component.onCompleted: {
             for (var i=0; i<100; ++i)
-                appendSample(newSample(i));
+                append_sample(new_sample(i));
         }
 
         property int offset: 100;
@@ -79,14 +80,14 @@ Item {
         repeat: true
         running: true
         onTriggered: {
-            graph.removeFirstSample();
-            graph.appendSample(graph.newSample(++graph.offset));
+            scene.remove_first_sample();
+            scene.append_sample(scene.new_sample(++scene.offset));
         }
 
     }
 
     Rectangle {
-        anchors.fill: graph
+        anchors.fill: scene
         color: "transparent"
         border.color: "black"
         border.width: 2
