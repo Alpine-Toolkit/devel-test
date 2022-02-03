@@ -2,15 +2,18 @@
 
 #include "qmath.h"
 
+/**************************************************************************************************/
+
 #define GRID_SIZE 32
+
+/**************************************************************************************************/
 
 GridNode::GridNode()
   // QSGGeometry(const QSGGeometry::AttributeSet &attributes, int vertexCount, int indexCount = 0, int indexType = UnsignedShortType)
   : m_geometry(QSGGeometry::defaultAttributes_Point2D(), 0)
 {
-  // m_geometry ? versus
-  //   QSGGeometry* QSGBasicGeometryNode::geometry()
   setGeometry(&m_geometry);
+  // https://doc.qt.io/qt-6/qsggeometry.html#DrawingMode-enum
   m_geometry.setDrawingMode(QSGGeometry::DrawLines);
 
   // void QSGGeometryNode::setMaterial(QSGMaterial *material)
@@ -34,10 +37,9 @@ GridNode::set_rect(const QRectF &rect)
   int h_count = int((h - 1) / GRID_SIZE);
   int line_count = v_count + h_count;
 
-  QSGGeometry *g = geometry();
-  g->allocate(line_count * 2);
+  m_geometry.allocate(line_count * 2);
 
-  QSGGeometry::Point2D *v = g->vertexDataAsPoint2D();
+  QSGGeometry::Point2D *v = m_geometry.vertexDataAsPoint2D();
 
   // write the vertical lines
   size_t k = 0;

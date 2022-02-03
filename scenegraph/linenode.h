@@ -3,16 +3,17 @@
 
 #include <QSGGeometryNode>
 
+/**************************************************************************************************/
+
 class LineNode : public QSGGeometryNode
 {
 public:
   LineNode(float size, float spread, const QColor &color);
 
-  void updateGeometry(const QRectF &bounds, const QList<qreal> &samples);
+  void update_geometry(const QRectF &bounds, const QList<qreal> &samples);
 
 private:
   QSGGeometry m_geometry;
-
 };
 
 #endif // LINENODE_H

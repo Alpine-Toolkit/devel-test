@@ -63,7 +63,8 @@ Item {
 
         function new_sample(i) {
             // return (Math.sin(i / 100.0 * Math.PI * 2) + 1) * 0.4 + Math.random() * 0.05;
-            return (Math.sin(i / 100.0 * Math.PI * 2) + 1) * 0.4;
+            // ([-1, 1] + 1) -> [0, 2]
+            return (Math.sin(i / 100 * Math.PI * 2) + 1) / 2 * .8 + .1;
         }
 
         Component.onCompleted: {
@@ -80,6 +81,8 @@ Item {
         repeat: true
         running: true
         onTriggered: {
+            // keep 100 samples
+            // else it compress the sin wave
             scene.remove_first_sample();
             scene.append_sample(scene.new_sample(++scene.offset));
         }

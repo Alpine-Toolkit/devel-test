@@ -1,8 +1,10 @@
 #include "linenode.h"
 
+#include <QtGlobal>
 #include <QtGui/QColor>
-
 #include <QtQuick/QSGMaterial>
+
+/**************************************************************************************************/
 
 class LineShader : public QSGMaterialShader
 {
@@ -15,6 +17,8 @@ public:
   bool updateUniformData(RenderState &state, QSGMaterial *new_material, QSGMaterial *old_material) override;
 };
 
+/**************************************************************************************************/
+
 class LineMaterial : public QSGMaterial
 {
 public:
@@ -23,21 +27,37 @@ public:
     setFlag(Blending);
   }
 
+  // This function is called by the scene graph to query an identifier that is unique to the
+  // QSGMaterialShader instantiated by createShader().
+  // For many materials, the typical approach will be to return a pointer to a static, and so
+  // globally available, QSGMaterialType instance. The QSGMaterialType is an opaque object. Its
+  // purpose is only to serve as a type-safe, simple way to generate unique material identifiers.
   QSGMaterialType *type() const override
   {
     static QSGMaterialType type;
     return &type;
   }
 
+  // This function returns a new instance of a the QSGMaterialShader implementation used to render
+  // geometry for a specific implementation of QSGMaterial.
+  // The function will be called only once for each combination of material type and renderMode and
+  // will be cached internally.
   QSGMaterialShader *createShader(QSGRendererInterface::RenderMode) const override
   {
     return new LineShader;
   }
 
+  // Compares this material to other and returns 0 if they are equal; -1 if this material should
+  // sort before other and 1 if other should sort before.
+  // The scene graph can reorder geometry nodes to minimize state changes. The compare function is
+  // called during the sorting process so that the materials can be sorted to minimize state changes
+  // in each call to QSGMaterialShader::updateState().
   int compare(const QSGMaterial *m) const override
   {
+    // The this pointer and other is guaranteed to have the same type().
     const LineMaterial *other = static_cast<const LineMaterial *>(m);
 
+    // example ...
     if (int diff = int(state.color.rgb()) - int(other->state.color.rgb()))
       return diff;
 
@@ -50,6 +70,7 @@ public:
     return 0;
   }
 
+  // Shader state
   struct {
     QColor color;
     float size;
@@ -57,31 +78,45 @@ public:
   } state;
 };
 
+/**************************************************************************************************/
+
+// updateUniformData() is expected to update the contents of a QByteArray that will then be exposed
+// to the shaders as a uniform buffer.
 bool
 LineShader::updateUniformData(RenderState &state, QSGMaterial *new_material, QSGMaterial *)
 {
-  QByteArray *buf = state.uniformData();
-  Q_ASSERT(buf->size() >= 92);
+  // layout(std140, binding = 0) uniform buf {
+  //     mat4 qt_Matrix;   // 4*4*4 = 64
+  //     vec4 color;       //   4*4 = 16 @64
+  //     float qt_Opacity; //     4      @80
+  //     float size;       //     4      @84
+  //     float spread;     //     4      @88
+  // };
+
+  QByteArray *buffer = state.uniformData();
+  Q_ASSERT(buffer->size() >= 92);
 
   if (state.isMatrixDirty()) {
-    const QMatrix4x4 m = state.combinedMatrix();
-    memcpy(buf->data(), m.constData(), 64);
+    const QMatrix4x4 matrice = state.combinedMatrix();
+    memcpy(buffer->data(), matrice.constData(), 64);
   }
 
   if (state.isOpacityDirty()) {
     const float opacity = state.opacity();
-    memcpy(buf->data() + 80, &opacity, 4);
+    memcpy(buffer->data() + 80, &opacity, 4);
   }
 
-  LineMaterial *mat = static_cast<LineMaterial *>(new_material);
+  LineMaterial *material = static_cast<LineMaterial *>(new_material);
   float c[4];
-  mat->state.color.getRgbF(&c[0], &c[1], &c[2], &c[3]);
-  memcpy(buf->data() + 64, c, 16);
-  memcpy(buf->data() + 84, &mat->state.size, 4);
-  memcpy(buf->data() + 88, &mat->state.spread, 4);
+  material->state.color.getRgbF(&c[0], &c[1], &c[2], &c[3]);
+  memcpy(buffer->data() + 64, c, 16);
+  memcpy(buffer->data() + 84, &material->state.size, 4);
+  memcpy(buffer->data() + 88, &material->state.spread, 4);
 
   return true;
 }
+
+/**************************************************************************************************/
 
 struct LineVertex {
   float x;
@@ -90,31 +125,49 @@ struct LineVertex {
   inline void set(float xx, float yy, float tt) { x = xx; y = yy; t = tt; }
 };
 
+/**************************************************************************************************/
+
 static const
 QSGGeometry::AttributeSet &attributes()
 {
+  // create(int pos, int tupleSize, int primitiveType, bool isPosition = false)
   static QSGGeometry::Attribute attr[] = {
+    // layout(location = 0) in vec4 pos;
     QSGGeometry::Attribute::create(0, 2, QSGGeometry::FloatType, true),
+    // layout(location = 1) in float t;
     QSGGeometry::Attribute::create(1, 1, QSGGeometry::FloatType)
   };
-  static QSGGeometry::AttributeSet set = { 2, 3 * sizeof(float), attr };
+  static QSGGeometry::AttributeSet set = {
+    2,
+    // 3 * sizeof(float),
+    sizeof(LineVertex),
+    attr
+  };
   return set;
 }
 
+/**************************************************************************************************/
+
 LineNode::LineNode(float size, float spread, const QColor &color)
+  // QSGGeometry::QSGGeometry(const QSGGeometry::AttributeSet &attributes, int vertexCount, int indexCount = 0, int indexType = UnsignedShortType)
   : m_geometry(attributes(), 0)
 {
   setGeometry(&m_geometry);
   m_geometry.setDrawingMode(QSGGeometry::DrawTriangleStrip);
+  //                2(x1,y1,t=1)                4(x2,y2,t=1)
+  //
+  //  1(x1,y1,t=0)               3(x2,y2,t=0)                 5(x3,y3,t=0)...
 
-  LineMaterial *m = new LineMaterial;
-  m->state.color = color;
-  m->state.size = size;
-  m->state.spread = spread;
+  LineMaterial *material = new LineMaterial;
+  material->state.color = color;
+  material->state.size = size;
+  material->state.spread = spread;
 
-  setMaterial(m);
+  setMaterial(material);
   setFlag(OwnsMaterial);
 }
+
+/**************************************************************************************************/
 
 /*
  * Assumes that samples have values in the range of 0 to 1 and scales them to
@@ -125,7 +178,7 @@ LineNode::LineNode(float size, float spread, const QColor &color)
  * "t" to shift the point up or down and to add antialiasing.
  */
 void
-LineNode::updateGeometry(const QRectF &bounds, const QList<qreal> &samples)
+LineNode::update_geometry(const QRectF &bounds, const QList<qreal> &samples)
 {
   m_geometry.allocate(samples.size() * 2);
 
@@ -137,9 +190,13 @@ LineNode::updateGeometry(const QRectF &bounds, const QList<qreal> &samples)
   float dx = w / (samples.size() - 1);
 
   LineVertex *v = (LineVertex *) m_geometry.vertexData();
-  for (int i=0; i<samples.size(); ++i) {
-    v[i*2+0].set(x + dx * i, y + samples.at(i) * h, 0);
-    v[i*2+1].set(x + dx * i, y + samples.at(i) * h, 1);
+  size_t k = 0;
+  for (size_t i=0; i<samples.size(); ++i) {
+    float xx = x + dx * i;
+    float yy = y + samples.at(i) * h;
+    // qInfo() << xx << " " << yy;
+    v[k++].set(xx, yy, 0);
+    v[k++].set(xx, yy, 1);
   }
 
   markDirty(QSGNode::DirtyGeometry);

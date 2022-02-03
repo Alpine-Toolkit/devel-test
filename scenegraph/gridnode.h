@@ -15,10 +15,11 @@ public:
   void set_rect(const QRectF &rect);
 
 private:
-  // QSGFlatColorMaterialprovides a convenient way of rendering solid colored geometry
-  QSGFlatColorMaterial m_material;
+  // allocate geometry and material
   // QSGGeometry provides low-level storage for graphics primitives
   QSGGeometry m_geometry;
+  // QSGFlatColorMaterialprovides a convenient way of rendering solid colored geometry
+  QSGFlatColorMaterial m_material;
 };
 
 #endif // GRIDNODE_H

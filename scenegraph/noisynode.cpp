@@ -6,7 +6,11 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGMaterial>
 
+/**************************************************************************************************/
+
 #define NOISE_SIZE 64
+
+/**************************************************************************************************/
 
 class NoisyShader : public QSGMaterialShader
 {
@@ -20,6 +24,8 @@ public:
   void updateSampledImage(RenderState &state, int binding, QSGTexture **texture,
                           QSGMaterial *new_material, QSGMaterial *old_material) override;
 };
+
+/**************************************************************************************************/
 
 class NoisyMaterial : public QSGMaterial
 {
@@ -45,9 +51,9 @@ public:
     return new NoisyShader;
   }
 
-  int compare(const QSGMaterial *m) const override
+  int compare(const QSGMaterial *material) const override
   {
-    const NoisyMaterial *other = static_cast<const NoisyMaterial *>(m);
+    const NoisyMaterial *other = static_cast<const NoisyMaterial *>(material);
 
     if (int diff = int(state.color.rgb()) - int(other->state.color.rgb()))
       return diff;
@@ -64,6 +70,8 @@ public:
     QSGTexture *texture;
   } state;
 };
+
+/**************************************************************************************************/
 
 bool
 NoisyShader::updateUniformData(RenderState &state, QSGMaterial *new_material, QSGMaterial *)
@@ -92,6 +100,8 @@ NoisyShader::updateUniformData(RenderState &state, QSGMaterial *new_material, QS
 
   return true;
 }
+
+/**************************************************************************************************/
 
 void NoisyShader::updateSampledImage(RenderState &state, int binding, QSGTexture **texture,
                                      QSGMaterial *new_material, QSGMaterial *)
@@ -130,6 +140,8 @@ NoisyNode::NoisyNode(QQuickWindow *window)
   setGeometry(g);
   setFlag(OwnsGeometry, true);
 }
+
+/**************************************************************************************************/
 
 void
 NoisyNode::set_rect(const QRectF &bounds)
