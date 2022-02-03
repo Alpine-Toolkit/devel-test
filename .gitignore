@@ -1,0 +1,6 @@
+*~
+
+*-build/
+scenegraph/shaders/*.qsb
+
+scenegraph/doc/
