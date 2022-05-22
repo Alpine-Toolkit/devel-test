@@ -1,3 +1,5 @@
+/**************************************************************************************************/
+
 #include <QtGlobal>
 
 #include "scenegraph.h"
@@ -6,13 +8,23 @@
 #include "gridnode.h"
 #include "linenode.h"
 
+/**************************************************************************************************/
+
 Scene::Scene()
-  : m_samples_changed(false)
-  , m_geometry_changed(false)
+  : m_geometry_changed(false),
+    m_samples_changed(false)
 {
   setFlag(ItemHasContents, true);
 }
 
+void
+Scene::geometryChange(const QRectF &new_geometry, const QRectF &old_geometry)
+{
+  qInfo() << new_geometry << "->" << old_geometry;
+  m_geometry_changed = true;
+  // update(); // useless ??? done in supra ???
+  QQuickItem::geometryChange(new_geometry, old_geometry);
+}
 
 void
 Scene::append_sample(qreal value)
@@ -23,7 +35,6 @@ Scene::append_sample(qreal value)
   update();
 }
 
-
 void
 Scene::remove_first_sample()
 {
@@ -33,14 +44,7 @@ Scene::remove_first_sample()
   update();
 }
 
-void
-Scene::geometryChange(const QRectF &new_geometry, const QRectF &old_geometry)
-{
-  m_geometry_changed = true;
-  update();
-  QQuickItem::geometryChange(new_geometry, old_geometry);
-}
-
+/**************************************************************************************************/
 
 class SceneNode : public QSGNode
 {
@@ -50,7 +54,6 @@ public:
   LineNode *line;
   LineNode *shadow;
 };
-
 
 QSGNode *
 Scene::updatePaintNode(QSGNode *old_node, UpdatePaintNodeData *)

@@ -1,7 +1,10 @@
+/**************************************************************************************************/
 #ifndef SCENE_H
 #define SCENE_H
 
 #include <QQuickItem>
+
+/**************************************************************************************************/
 
 class Scene : public QQuickItem
 {
@@ -19,10 +22,12 @@ public slots:
   void remove_first_sample();
 
 private:
-  QList<qreal> m_samples;
-
-  bool m_samples_changed;
   bool m_geometry_changed;
+
+  QList<qreal> m_samples;
+  bool m_samples_changed;
 };
+
+/**************************************************************************************************/
 
 #endif // SCENE_H
