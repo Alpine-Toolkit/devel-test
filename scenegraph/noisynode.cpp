@@ -8,10 +8,6 @@
 
 /**************************************************************************************************/
 
-#define NOISE_SIZE 64
-
-/**************************************************************************************************/
-
 class NoisyShader : public QSGMaterialShader
 {
 public:
@@ -76,68 +72,83 @@ public:
 bool
 NoisyShader::updateUniformData(RenderState &state, QSGMaterial *new_material, QSGMaterial *)
 {
-  QByteArray *buf = state.uniformData();
-  Q_ASSERT(buf->size() >= 92);
+  // layout(std140, binding = 0) uniform buf {
+  //     mat4 qt_Matrix;
+  //     vec4 color;
+  //     vec2 texture_size;
+  //     float qt_Opacity;
+  // };
+
+  auto material = static_cast<NoisyMaterial *>(new_material);
+
+  QByteArray *buffer = state.uniformData();
+  Q_ASSERT(buffer->size() >= 92);
 
   if (state.isMatrixDirty()) {
     const QMatrix4x4 m = state.combinedMatrix();
-    memcpy(buf->data(), m.constData(), 64);
+    memcpy(buffer->data(), m.constData(), 64);
   }
+
+  float c[4];
+  material->state.color.getRgbF(&c[0], &c[1], &c[2], &c[3]);
+  memcpy(buffer->data() + 64, c, 16);
+
+  const QSize s = material->state.texture->textureSize();
+  float texture_size[2] = { 1.0f / s.width(), 1.0f / s.height() };
+  memcpy(buffer->data() + 80, texture_size, 8);
 
   if (state.isOpacityDirty()) {
     const float opacity = state.opacity();
-    memcpy(buf->data() + 88, &opacity, 4);
+    memcpy(buffer->data() + 88, &opacity, 4);
   }
-
-  NoisyMaterial *mat = static_cast<NoisyMaterial *>(new_material);
-  float c[4];
-  mat->state.color.getRgbF(&c[0], &c[1], &c[2], &c[3]);
-  memcpy(buf->data() + 64, c, 16);
-
-  const QSize s = mat->state.texture->textureSize();
-  float textureSize[2] = { 1.0f / s.width(), 1.0f / s.height() };
-  memcpy(buf->data() + 80, textureSize, 8);
 
   return true;
 }
 
 /**************************************************************************************************/
 
-void NoisyShader::updateSampledImage(RenderState &state, int binding, QSGTexture **texture,
-                                     QSGMaterial *new_material, QSGMaterial *)
+void NoisyShader::updateSampledImage(RenderState &state,
+                                     int binding,
+                                     QSGTexture **texture,
+                                     QSGMaterial *new_material,
+                                     QSGMaterial *
+                                     )
 {
   Q_UNUSED(state);
   Q_UNUSED(binding);
 
-  NoisyMaterial *mat = static_cast<NoisyMaterial *>(new_material);
-  *texture = mat->state.texture;
+  auto material = static_cast<NoisyMaterial *>(new_material);
+  *texture = material->state.texture;
 }
+
+/**************************************************************************************************/
 
 NoisyNode::NoisyNode(QQuickWindow *window)
 {
   // Make some noise...
+  const int NOISE_SIZE = 64;
   QImage image(NOISE_SIZE, NOISE_SIZE, QImage::Format_RGB32);
-  uint *data = (uint *) image.bits();
-  for (int i=0; i<NOISE_SIZE * NOISE_SIZE; ++i) {
+  auto data = (uint *) image.bits();
+  for (int i = 0; i < NOISE_SIZE * NOISE_SIZE; ++i) {
     uint g = QRandomGenerator::global()->bounded(0xff);
     data[i] = 0xff000000 | (g << 16) | (g << 8) | g;
   }
 
-  QSGTexture *t = window->createTextureFromImage(image);
-  t->setFiltering(QSGTexture::Nearest);
-  t->setHorizontalWrapMode(QSGTexture::Repeat);
-  t->setVerticalWrapMode(QSGTexture::Repeat);
+  QSGTexture *texture = window->createTextureFromImage(image);
+  texture->setFiltering(QSGTexture::Nearest);
+  texture->setHorizontalWrapMode(QSGTexture::Repeat);
+  texture->setVerticalWrapMode(QSGTexture::Repeat);
 
-  NoisyMaterial *m = new NoisyMaterial;
-  m->state.texture = t;
-  m->state.color = QColor::fromRgbF(0.95, 0.95, 0.97);
-
-  setMaterial(m);
+  auto material = new NoisyMaterial;
+  material->state.texture = texture;
+  material->state.color = QColor::fromRgbF(0.95, 0.95, 0.97);
+  setMaterial(material);
   setFlag(OwnsMaterial, true);
 
-  QSGGeometry *g = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4);
-  QSGGeometry::updateTexturedRectGeometry(g, QRect(), QRect());
-  setGeometry(g);
+  // TexturedPoint2D = vec2 position, vec2 texture_coordinate
+  QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4);
+  QSGGeometry::updateTexturedRectGeometry(geometry, QRect(), QRect());
+  setGeometry(geometry);
   setFlag(OwnsGeometry, true);
 }
 

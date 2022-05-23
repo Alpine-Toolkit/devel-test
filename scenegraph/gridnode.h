@@ -1,13 +1,18 @@
 #ifndef GRIDNODE_H
 #define GRIDNODE_H
 
+/**************************************************************************************************/
+
 #include <QtQuick/QSGGeometryNode>
 #include <QtQuick/QSGFlatColorMaterial>
 
+/**************************************************************************************************/
+
 class GridNode : public QSGGeometryNode
 {
-  // The QSGGeometryNode consists of geometry and material. The geometry defines the mesh, the
-  // vertices and their structure, to be drawn. The Material defines how the shape is filled.
+  // The QSGGeometryNode consists of geometry and material.
+  // The geometry defines the mesh, the vertices and their structure, to be drawn.
+  // The Material defines how the shape is filled.
 
 public:
   GridNode();

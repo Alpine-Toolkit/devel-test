@@ -1,4 +1,9 @@
 ####################################################################################################
+#
+# To get full output use
+#   make VERBOSE=1
+#
+####################################################################################################
 
 cmake_minimum_required(VERSION 3.16)
 project(scenegraph LANGUAGES CXX)
@@ -16,6 +21,11 @@ find_package(Qt6 COMPONENTS
   Quick
   ShaderTools
 )
+
+include_directories(${Qt6Quick_PRIVATE_INCLUDE_DIRS})
+# include_directories(${Qt${QT_VERSION_MAJOR}Quick_PRIVATE_INCLUDE_DIRS})
+message(STATUS "Qt private API include dir: ${Qt6Quick_PRIVATE_INCLUDE_DIRS}")
+# -- Qt private API include dir: /opt/Qt/6.3.0/gcc_64/include/QtQuick/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtQuick/6.3.0/QtQuick;/opt/Qt/6.3.0/gcc_64/include/QtCore/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtCore/6.3.0/QtCore;/opt/Qt/6.3.0/gcc_64/include/QtGui/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtGui/6.3.0/QtGui;/opt/Qt/6.3.0/gcc_64/include/QtDBus/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtDBus/6.3.0/QtDBus;/opt/Qt/6.3.0/gcc_64/include/QtQml/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtQml/6.3.0/QtQml;/opt/Qt/6.3.0/gcc_64/include/QtNetwork/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtNetwork/6.3.0/QtNetwork;/opt/Qt/6.3.0/gcc_64/include/QtQmlModels/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtQmlModels/6.3.0/QtQmlModels;/opt/Qt/6.3.0/gcc_64/include/QtOpenGL/6.3.0;/opt/Qt/6.3.0/gcc_64/include/QtOpenGL/6.3.0/QtOpenGL
 
 ####################################################################################################
 
@@ -49,6 +59,7 @@ qt_add_qml_module(scenegraph
         shaders/line.vert.qsb
         shaders/noisy.frag.qsb
         shaders/noisy.vert.qsb
+        icons/qt-logo.png
     RESOURCE_PREFIX "/scenegraph/scene"
     NO_RESOURCE_TARGET_PATH
 )

@@ -21,39 +21,36 @@ GridNode::GridNode()
   m_material.setColor(Qt::gray);
 }
 
-/*
- * The function hardcodes a fixed set of grid lines and scales
- * those to the bounding rect.
- */
+// The function hardcodes a fixed set of grid lines and scales those to the bounding rect.
 void
 GridNode::set_rect(const QRectF &rect)
 {
-  float x = rect.x();
-  float y = rect.y();
-  float w = rect.width();
-  float h = rect.height();
+  auto x = rect.x();
+  auto y = rect.y();
+  auto w = rect.width();
+  auto h = rect.height();
 
-  int v_count = int((w - 1) / GRID_SIZE);
-  int h_count = int((h - 1) / GRID_SIZE);
-  int line_count = v_count + h_count;
+  auto v_count = int((w - 1) / GRID_SIZE);
+  auto h_count = int((h - 1) / GRID_SIZE);
+  auto line_count = v_count + h_count;
 
   m_geometry.allocate(line_count * 2);
 
-  QSGGeometry::Point2D *v = m_geometry.vertexDataAsPoint2D();
+  QSGGeometry::Point2D *vertices = m_geometry.vertexDataAsPoint2D();
 
   // write the vertical lines
   size_t k = 0;
-  for (size_t i=0; i<v_count; ++i)  {
+  for (size_t i = 0; i < v_count; ++i)  {
     float dx = (i + 1) * GRID_SIZE;
-    v[k++].set(dx, y);
-    v[k++].set(dx, y + h);
+    vertices[k++].set(dx, y);
+    vertices[k++].set(dx, y + h);
   }
 
   // write the horizontal lines
-  for (size_t i=0; i<h_count; ++i)  {
+  for (size_t i = 0; i < h_count; ++i)  {
     float dy = (i + 1) * GRID_SIZE;
-    v[k++].set(x, dy);
-    v[k++].set(x + w, dy);
+    vertices[k++].set(x, dy);
+    vertices[k++].set(x + w, dy);
   }
 
   // Tell the scenegraph we updated the geometry
