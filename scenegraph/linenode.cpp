@@ -1,8 +1,8 @@
 #include "linenode.h"
 
+#include <QColor>
+#include <QSGMaterial>
 #include <QtGlobal>
-#include <QtGui/QColor>
-#include <QtQuick/QSGMaterial>
 
 /**************************************************************************************************/
 
